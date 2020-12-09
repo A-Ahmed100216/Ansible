@@ -68,3 +68,101 @@ web3.machine
 db1.machine
 
 ```
+
+# Setting Up
+## Instances
+1. Create an Instance for the Controller. Configure the Security Groups to allow SSH from your ip address.
+2. Create an Instance for the Host. Configure the SG to accept SSH traffic from the Controller SG i.e. allows incoming traffic from the controller instance.
+3. Connect to the Controller Instance.
+4. Install Ansible
+```bash
+sudo apt update
+sudo apt install software-properties-common
+sudo apt-add-repository --yes --update ppa:ansible/ansible
+sudo apt install ansible
+```
+5. Check Ansible has been installed
+```
+
+4. Copy the ssh access key into the controller virtual machine
+```bash
+scp -i key_name key_name ubuntu@db_ip:~/.ssh/
+```
+5. N
+
+## Host file
+* Here you specify how to connect to a host with an inventory
+```
+[host_a]
+host_private_ip ansible_connection=ssh ansible_ssh_private_key_file=/home/ubuntu/.ssh/key_name.pem
+```
+* Run the following command to check if the machines are communicating
+```
+ansible host_a -m ping
+```
+* If we have muliple hosts, we can ping them automatically
+```bash
+ansible all -m ping
+```
+### Additional Commands
+* View host machine details
+```bash
+ansible all -a "uname -a"
+```
+* View date created
+```bash
+ansible all -a "date"
+```
+* View memory used and available of a specific host or all hosts.
+```bash
+ansible host_a -a "free -m"
+ansible all -a "free -m"
+```
+* Install/update on a specific host
+```
+ansible host_a -a "apt-get upgrade" --become
+```
+
+### Ad-Hoc Commands
+* Typically used for infrequent commands e.g. power off all machines during holidays.
+* Used to reboot servers, copy files, manage packages and users etc.
+#### Tasks
+1. Check the uptime of the machine
+```bash
+ansible host_a -a uptime
+```
+2. Find the Ansible terminology to update and upgrading all packages
+```bash
+ansible host_a -m apt -a "upgrade=yes" --become
+```
+
+
+## Writing a playbook
+* YAML Playbook starts with 3 dashes (---)
+* Playbooks consist of plays
+* We can define a name
+* Each task should be specific
+* One playbook can have many tasks
+* **Be mindful of indentation**
+### Steps:
+1. Run an upgrade
+```bash
+ansible host_a -m apt -a "upgrade=yes update_cache=yes" --become
+```
+2. Create a directory for playbooks `~/playbooks` and in here create a .yaml file with the following commands.
+
+```yaml
+---
+- name: play 1
+  # Host is what we will target, in this case, host_a  
+  hosts: host_a
+  # Gather facts/state of machine before running playbook
+  gather_facts: yes
+  # Become grants root permissions to perform tasks which may require root access
+  become: true
+
+  tasks:
+  - name: Trying to install SQL DB
+    # Specify actions
+    apt: pkg=mysql-server state=present
+```
