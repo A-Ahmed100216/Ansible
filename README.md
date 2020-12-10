@@ -88,7 +88,7 @@ sudo apt install ansible
 ```bash
 scp -i key_name key_name ubuntu@db_ip:~/.ssh/
 ```
-5. N
+
 
 ## Host file
 * Here you specify how to connect to a host with an inventory
@@ -146,7 +146,7 @@ ansible host_a -m apt -a "upgrade=yes" --become
 * **Be mindful of indentation**
 ### Steps:
 1. Run an upgrade
-```bash
+```yaml
 ansible host_a -m apt -a "upgrade=yes update_cache=yes" --become
 ```
 2. Create a directory for playbooks `~/playbooks` and in here create a .yaml file with the following commands.
