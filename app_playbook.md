@@ -85,6 +85,16 @@
     notify:
     -  Restart nginx
     ```
+
+* Run `npm install`
+```YAML
+- name: run npm install
+  become: yes
+  shell:
+    chdir: /home/ubuntu/app/app
+    cmd: npm install
+```
+
 * Start the app
 ```YAML
 - name: Start APP
@@ -170,12 +180,19 @@ The complete playbook is as follows:
       notify:
       -  Restart nginx
 
-    - name: Start APP
+    - name: run npm install
+      become: yes
+      shell:
+        chdir: /home/ubuntu/app/app
+        cmd: npm install  
+
+    - name: Start app
       become_user: ubuntu
       command: pm2 start app.js --name app chdir=/home/ubuntu/app/app
       ignore_errors: yes
 
   handlers:
+    become: yes
     - name: Start nginx
       service:
         name: nginx
