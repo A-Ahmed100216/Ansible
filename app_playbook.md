@@ -5,7 +5,7 @@
 2. Configure the security groups of these hosts to accept traffic from the controller. Additionally, the database should be open to the app server.
 
 ### Installations and Tasks for App
-* [**App Playbook**]()
+* [**App Playbook**](https://github.com/A-Ahmed100216/Ansible/blob/main/app.yaml)
 * Install git
 ```YAML
 - name: install git
@@ -114,7 +114,7 @@
 ```
 
 ## Installations and Tasks for DB
-* [**DB Playbook**]()
+* [**DB Playbook**](https://github.com/A-Ahmed100216/Ansible/blob/main/db.yaml)
 * Run updates of source lists
 ```YAML
 - name: apt update and upgrade
