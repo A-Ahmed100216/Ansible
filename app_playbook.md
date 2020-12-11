@@ -1,21 +1,30 @@
 # Task - Create a playbook for the Sparta Sample Node App
 
-### Installations and Tasks
+
+1. Create host instances for the app and database.
+2. Configure the security groups of these hosts to accept traffic from the controller. Additionally, the database should be open to the app server.
+
+### Installations and Tasks for App
+* [**App Playbook**]()
 * Install git
 ```YAML
 - name: install git
+  # apt - used to install files, specify the name i.e. pkg
   apt: pkg=git state=present
 ```
 * Install nodejs
 ```YAML
-- name: add apt key for nodesource
-  apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key
 
+- name: add apt key for nodesource
+  # Apt-key is used to acquire the key to install certain packages
+  apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+  # Install nodejs
 - name: install nodejs
   apt: name=nodejs
 ```
 * Install pm2
 ```YAML
+# To install pm2, we use npm i.e. node package manager.
 - name: Install pm2
   npm:
     name: pm2
@@ -63,6 +72,7 @@
   * Write the reverse proxy commands to the new file
   ```YAML
   - name: Creating a file with content
+  # Copy can be used to write contents to a file
     copy:
       dest: "/etc/nginx/sites-available/custom_server.conf"
       content: |
@@ -103,102 +113,49 @@
   ignore_errors: yes
 ```
 
-
-
-## Playbook
-The complete playbook is as follows:
+## Installations and Tasks for DB
+* [**DB Playbook**]()
+* Run updates of source lists
 ```YAML
----
-- name: provision app
-  hosts: host_a
-  gather_facts: yes
+- name: apt update and upgrade
+  apt:
+    upgrade: "yes"
+    update_cache: "yes"
+    cache_valid_time: 86400
+```
+
+* Install Mongodb. This requires the public key and repository.
+* Once installed, `notify` is used to trigger the `start mongod` handle.
+```YAML
+- name: MongoDB - Import public key used by package management system
+  apt_key:
+    url: https://www.mongodb.org/static/pgp/server-3.2.asc
+    state: present
+
+- name: Add repository
   become: True
+  apt_repository:
+    filename: '/etc/apt/sources.list.d/mongodb-org-3.2.list'
+    repo: 'deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse'
+    state: present
+    update_cache: "yes"
 
-  tasks:
-    - name: install python
-      apt: pkg=python state=latest
-
-    - name: install curl
-      apt: pkg=curl state=present
-
-    - name: add apt key for nodesource
-      apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-
-    - name: install nodejs
-      apt: name=nodejs
-
-    - name: install git
-      apt: pkg=git state=present
-
-    - name: install npm
-      apt: name=npm state=present
-
-    - name: install nginx
-      apt: name=nginx state=present
-      notify:
-        - Start nginx
-
-    - name: Install pm2
-      npm:
-        name: pm2
-        global: yes
-
-    - name: Copy app files
-      copy:
-        src: /home/ubuntu/app
-        dest: /home/ubuntu/app
-        force: no
-
-    - name: remove nginx default file
-      file:
-        path: /etc/nginx/sites-enabled/default
-        state: absent
-
-    - name: create config file
-      file:
-        path: /etc/nginx/sites-available/custom_server.conf
-        state: touch
-        mode: 666
-
-
-    - name: Creating a file with content
-      copy:
-        dest: "/etc/nginx/sites-available/custom_server.conf"
-        content: |
-          server {
-          listen 80;
-          location / {
-          proxy_pass http://127.0.0.1:3000;
-          }
-          }
-
-    - name: Create a symbolic link between sites enabled and sites available
-      file:
-        src: /etc/nginx/sites-available/custom_server.conf
-        dest: /etc/nginx/sites-enabled/custom_server.conf
-        state: link
-      notify:
-      -  Restart nginx
-
-    - name: run npm install
-      become: yes
-      shell:
-        chdir: /home/ubuntu/app/app
-        cmd: npm install  
-
-    - name: Start app
-      become_user: ubuntu
-      command: pm2 start app.js --name app chdir=/home/ubuntu/app/app
-      ignore_errors: yes
-
-  handlers:
-    become: yes
-    - name: Start nginx
-      service:
-        name: nginx
-        state: started
-    - name: Restart nginx
-      service:
-        name: nginx
-        state: restarted
+- name: Install MongoDB
+  apt:
+    name: mongodb-org
+    state: present
+    update_cache: "yes"
+  notify:
+  - start mongod
+```
+* Configure mongod and set bindip as 0.0.0.0. This is achievd via runnng a shell commands within the playbook. A mongod restart is subsequently triggered.  
+```YAML
+- name: set db host as global variable
+become: true
+shell: |
+ sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mongod.conf
+args:
+ chdir: /etc
+notify:
+- restart mongod
 ```

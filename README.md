@@ -136,8 +136,8 @@ ansible host_a -a uptime
 ansible host_a -m apt -a "upgrade=yes" --become
 ```
 
-
-## Writing a playbook
+# Playbooks
+## Writing a basic playbook
 * YAML Playbook starts with 3 dashes (---)
 * Playbooks consist of plays
 * We can define a name
@@ -166,3 +166,112 @@ ansible host_a -m apt -a "upgrade=yes update_cache=yes" --become
     # Specify actions
     apt: pkg=mysql-server state=present
 ```
+## Advanced Playbook Commands
+#### 1. Apt/npm
+* This is used to install packages managed by relevant package manager i.e. apt, npm etc.
+* Specify the name of package
+* Optionally set the state. To remove a package, set state to absent.
+* Optionally set update_cache to yes or True. This will update the repositories.
+```YAML
+- name: Install <package_name>  (state=present is optional)
+  apt:
+    name: <package_name>
+    state: present
+```
+#### 2. Copy
+* Copy files or folders.
+* src - location of the file i.e. the source
+* dest - where you wish to copy the file to i.e. the destination
+* Many other optional parameters can be applied.
+   * mode - the permissions you wish to apply
+   * force - whether you want the file to be rewritten every time you run the playbook, set to false if you do not.
+```YAML
+- name: Copy file with owner and permissions
+  copy:
+    src: /srv/myfiles/foo.conf
+    dest: /etc/foo.conf
+    mode: '0644'
+```
+* Can also be used to write content to files
+```YAML
+- name: Creating a file with content
+  copy:
+    dest: "/path/to/file.txt"
+    content: |
+      Hello
+      World
+```
+
+#### 3. Creating files
+* Create file by setting state to touch
+* path - define the path to the file.
+* mode - permissions you wish to apply
+```YAML
+- name: Create a file
+  file:
+    path: /etc/foo.conf
+    state: touch
+    mode: u=rw,g=r,o=r
+```
+* Can create symbolic links by setting state to link
+```YAML
+- name: Create a symbolic link
+  file:
+    src: /file/to/link/to
+    dest: /path/to/symlink
+    state: link
+```
+* Remove files by setting state to absent
+```YAML
+- name: Remove file
+  file:
+    path: /path/to/file.txt
+    state: absent
+```
+#### 4. Handlers
+* Run specific tasks only when a change is made
+* Handlers are tasks which only run when notified.
+* Can trigger handlers using 'notify'
+* Handler name should correspond to the notification
+* Indentation is key, handlers should be in line with 'task'
+* Place handlers at the end of the file
+```YAML
+- name: install nginx
+  apt: name=nginx state=present
+  notify:
+    - Start nginx
+
+  handlers:
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+```
+#### 5. Variables
+* Can be called throughout the playbooks.
+* Define vars at the start of the playbook
+* Call variables using {% %} or {{}}
+* Example
+```YAML
+# Defining global variables
+vars:
+  DB_HOST: 123.321.123.1
+
+tasks:
+  - name: set db host as global variable
+        become: true
+        shell: |
+          export DB_HOST={{ DB_HOST }}
+```
+
+
+#### 6. Templates
+* Largely text based or markup languages that don't have scripting or logical capabilities like python or ruby.
+* Template module is used to copy data from controller nodes to remote hosts,
+* Based on jinja2 templates.
+* In a jinja2 template, we can give the plain text which will be transferred to remote hosts as it is.
+* Can also give variables, which are either default ones like Ansible facts or defined in playbook or included in playbook from a variable file.
+* Mandatory parameters:
+  * src - The source of template file
+  * dest - destination where you want to copy this template (if only directory path is given then a file with same name of template will be created)
+* Can interpolate variables into templates, making them dynamic.
