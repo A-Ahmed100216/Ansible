@@ -234,7 +234,53 @@ ansible-playbook playbook_name.yaml
     path: /path/to/file.txt
     state: absent
 ```
-#### 4. Handlers
+#### 4. Blockinfile
+* Insert/update/remove blocks of text
+* Requires:
+  * path - the location of the file you wish to amend with block of text.
+```yaml
+- name: Insert text block in /path/to/file
+  blockinfile:
+    path: /path/to/file
+    block: |
+      This is some
+      text.
+```
+
+#### 5. Shell
+* Allows commands to be run through a shell.
+* Works as the command module but with a /bin/sh shell.
+* Syntax is as follows:
+
+```YAML
+- name: Output goes to text file
+  shell: |
+    somescript.sh >> somelog.txt
+    echo foo
+  args:
+    # Directory command is to be executed in
+    chdir: somedir/
+```
+#### 6. Service
+* Controls service state on remotes hosts
+* Requires:
+  * name - name of service
+  * state - started, stopped, restarted, reloaded
+```YAML
+- name: Start service httpd, if not started
+  service:
+    name: httpd
+    state: started
+```
+* Additional parameters can be used to enable a service
+```YAML
+- name: Enable service httpd
+  service:
+    name: httpd
+    enabled: yes
+```
+
+#### 7. Handlers
 * Run specific tasks only when a change is made
 * Handlers are tasks which only run when notified.
 * Can trigger handlers using 'notify'
@@ -253,7 +299,7 @@ ansible-playbook playbook_name.yaml
         name: nginx
         state: started
 ```
-#### 5. Variables
+#### 8. Variables
 * Can be called throughout the playbooks.
 * Define vars at the start of the playbook
 * Call variables using {% %} or {{}}
@@ -270,7 +316,7 @@ tasks:
           export DB_HOST={{ DB_HOST }}
 ```
 
-#### 6. Templates
+#### 9. Templates
 * Largely text based or markup languages that don't have scripting or logical capabilities like python or ruby.
 * Template module is used to copy data from controller nodes to remote hosts,
 * Based on jinja2 templates.
@@ -281,4 +327,11 @@ tasks:
   * dest - destination where you want to copy this template (if only directory path is given then a file with same name of template will be created)
 * Can interpolate variables into templates, making them dynamic.
 
-#### 7.
+#### 10. Playbooks within playbooks
+* Can import in other playbooks to run within a playbook.
+* Uses the following:
+```YAML
+- import_playbook: webservers.yml
+- import_playbook: databases.yml
+```
+* Plays are run in the order they are listed
