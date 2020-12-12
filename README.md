@@ -166,6 +166,12 @@ ansible host_a -m apt -a "upgrade=yes update_cache=yes" --become
     # Specify actions
     apt: pkg=mysql-server state=present
 ```
+3. To run a playbook, use the following command:
+```YAML
+ansible-playbook playbook_name.yaml
+```
+
+
 ## Advanced Playbook Commands
 #### 1. Apt/npm
 * This is used to install packages managed by relevant package manager i.e. apt, npm etc.
@@ -264,7 +270,6 @@ tasks:
           export DB_HOST={{ DB_HOST }}
 ```
 
-
 #### 6. Templates
 * Largely text based or markup languages that don't have scripting or logical capabilities like python or ruby.
 * Template module is used to copy data from controller nodes to remote hosts,
@@ -275,3 +280,5 @@ tasks:
   * src - The source of template file
   * dest - destination where you want to copy this template (if only directory path is given then a file with same name of template will be created)
 * Can interpolate variables into templates, making them dynamic.
+
+#### 7.
